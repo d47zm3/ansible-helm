@@ -7,7 +7,7 @@
   changed_when: false
 
 - name: Execute Helm Installer
-  shell: /tmp/helm-installer.sh
+  command: /tmp/helm-installer.sh
   changed_when: false
 
 - name: Remove Helm Installer

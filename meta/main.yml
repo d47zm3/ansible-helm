@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: d47zm3
-  role_name: helm-3
+  role_name: helm
   description: Helm 3
   license: "license (BSD, MIT)"
 
