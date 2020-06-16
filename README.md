@@ -1,3 +1,6 @@
+![](https://github.com/d47zm3/ansible-helm/workflows/YAML%20Lint/badge.svg)
+![](https://github.com/d47zm3/ansible-helm/workflows/Ansible%20Lint/badge.svg)
+
 Helm
 =========
 
