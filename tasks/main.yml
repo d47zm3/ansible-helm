@@ -1,0 +1,15 @@
+---
+- name: Install Curl
+  apt: name=curl state=present
+
+- name: Download Helm Installer
+  get_url: url=https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 dest=/tmp/helm-installer.sh mode='0550'
+  changed_when: false
+
+- name: Execute Helm Installer
+  shell: /tmp/helm-installer.sh
+  changed_when: false
+
+- name: Remove Helm Installer
+  file: path=/tmp/helm-installer.sh state=absent
+  changed_when: false
