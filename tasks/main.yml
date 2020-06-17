@@ -1,15 +1,63 @@
 ---
-- name: Install Curl
-  apt: name=curl state=present
+- name: Make Sure JQ & CURL Are Installed
+  apt:
+    name: ['jq', 'curl']
+    state: present
 
-- name: Download Helm Installer
-  get_url: url=https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 dest=/tmp/helm-installer.sh mode='0550'
+- name: Find Latest Helm Release
+  shell: >
+    set -o pipefail && \
+    curl --silent "{{ github_release }}" | jq -r ".[].tag_name" | grep v3 | head -n1
+  args:
+    warn: false
+    executable: /bin/bash
+  register: latest_release
   changed_when: false
 
-- name: Execute Helm Installer
-  command: /tmp/helm-installer.sh
+- name: Check If Helm Is Installed
+  stat:
+    path: /usr/local/bin/helm
+  register: binary_exists
+
+- name: Check Installed Helm Version
+  shell: >
+    set -o pipefail && \
+    helm version | grep -i -o -E "v[0-9]+\.[0-9]+\.[0-9]+" | head -n1
+  args:
+    executable: /bin/bash
+  register: helm_version
+  when: binary_exists.stat.exists
   changed_when: false
 
-- name: Remove Helm Installer
-  file: path=/tmp/helm-installer.sh state=absent
-  changed_when: false
+- name: Remove Old Version
+  file:
+    path: /usr/local/bin/helm
+    state: absent
+  when: (not binary_exists.stat.exists) or (latest_release.stdout != helm_version.stdout)
+
+- name: Download Latest Release
+  uri:
+    url: "https://get.helm.sh/helm-{{ latest_release.stdout }}-linux-amd64.tar.gz"
+    dest: /tmp/helm.tar.gz
+    creates: /tmp/helm.tar.gz
+  when: (not binary_exists.stat.exists) or (latest_release.stdout != helm_version.stdout)
+
+- name: Unpack Helm
+  unarchive:
+    src: /tmp/helm.tar.gz
+    dest: /tmp/
+    remote_src: true
+  when: (not binary_exists.stat.exists) or (latest_release.stdout != helm_version.stdout)
+
+- name: Install Helm
+  copy: remote_src=true src=/tmp/linux-amd64/helm dest=/usr/local/bin/helm mode=0755
+  when: (not binary_exists.stat.exists) or (latest_release.stdout != helm_version.stdout)
+
+- name: Cleanup
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /tmp/helm.tar.gz
+    - /tmp/linux-amd64
+  when: (not binary_exists.stat.exists) or (latest_release.stdout != helm_version.stdout)
