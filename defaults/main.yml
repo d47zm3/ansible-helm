@@ -1,2 +1,3 @@
 ---
-# defaults file for helm-3
+# defaults file for helm
+github_release: https://api.github.com/repos/helm/helm/releases
